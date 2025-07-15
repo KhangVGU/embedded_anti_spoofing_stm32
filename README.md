@@ -31,16 +31,6 @@ from torch.ao.quantization import quantize_pt2e
 # ────────────────────────────────────────────────────────────────────────────
 from AASIST import Model
 
-# d_args = {
-#     # 1-D front-end
-#     "first_conv": 128,
-#     "filts": [70, [1, 32], [32, 32], [32, 64], [64, 64]],
-#     # Graph-attention branch
-#     "gat_dims": [64, 32],
-#     "pool_ratios": [0.5, 0.7, 0.5, 0.5],
-#     "temperatures": [2.0, 2.0, 100.0, 100.0]
-# }
-
 with open("./config/AASIST.conf", 'r') as f:
   cfg = json.load(f)
   d_args = cfg['model_config']
