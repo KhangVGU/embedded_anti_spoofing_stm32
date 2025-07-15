@@ -18,11 +18,11 @@ python main.py --eval --config ./config/AASIST-L.conf
 ```
 ### Conversion to ONNX
 ```
+#!/usr/bin/env python3
+
 import torch
 import numpy as np
 import json
-# import ai_edge_torch                                     # <- now safe
-# from ai_edge_torch.quantize import pt2e_quantizer, quant_config
 from torch.ao.quantization import quantize_pt2e
 
 # ────────────────────────────────────────────────────────────────────────────
