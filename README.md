@@ -26,7 +26,7 @@ import json
 from torch.ao.quantization import quantize_pt2e
 
 # ────────────────────────────────────────────────────────────────────────────
-# 2.  LOAD MODEL (+ required `d_args`)
+# 2.  LOAD MODEL
 # ────────────────────────────────────────────────────────────────────────────
 from AASIST import Model
 
