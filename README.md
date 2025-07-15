@@ -68,7 +68,7 @@ import edgeimpulse as ei
 
 ei.API_KEY = "ei_656a225s82q1232..." # API key
 
-ei.util.is_onnx_model("./aasist.onnx")
+ei.model.profile(model="./aasist.onnx", device='cortex-m4f-80mhz')
 ```
 
 ### License
