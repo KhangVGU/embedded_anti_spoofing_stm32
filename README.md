@@ -57,9 +57,9 @@ print(f"Model successfully exported")
 ```
 ### Run ONNX inference
 ```
-!python inference_onnx.py \
+python inference_onnx.py \
   --onnx_model_path     aasist.onnx \
-  --audio_path     path/to/audio/file
+  --audio_path     path/to/audio/file #for example LA/ASVspoof2019_LA_eval/flac/LA_E_6163791.flac
 ```
 
 ### Edge Impulse profiling
