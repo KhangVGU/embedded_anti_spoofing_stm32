@@ -1,5 +1,4 @@
 ### Getting started
-`requirements.txt` must be installed for execution. We state our experiment environment for those who prefer to simulate as similar as possible. 
 - Installing dependencies
 ```
 pip install -r requirements.txt
