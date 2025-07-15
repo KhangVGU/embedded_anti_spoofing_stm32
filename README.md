@@ -1,82 +1,85 @@
-# AASIST
-
-This repository provides the overall framework for training and evaluating audio anti-spoofing systems proposed in ['AASIST: Audio Anti-Spoofing using Integrated Spectro-Temporal Graph Attention Networks'](https://arxiv.org/abs/2110.01200)
-
 ### Getting started
 `requirements.txt` must be installed for execution. We state our experiment environment for those who prefer to simulate as similar as possible. 
 - Installing dependencies
 ```
 pip install -r requirements.txt
 ```
-- Our environment (for GPU training)
-  - Based on a docker image: `pytorch:1.6.0-cuda10.1-cudnn7-runtime`
-  - GPU: 1 NVIDIA Tesla V100
-    - About 16GB is required to train AASIST using a batch size of 24
-  - gpu-driver: 418.67
-
 ### Data preparation
-We train/validate/evaluate AASIST using the ASVspoof 2019 logical access dataset [4].
 ```
 python ./download_dataset.py
 ```
-(Alternative) Manual preparation is available via 
-- ASVspoof2019 dataset: https://datashare.ed.ac.uk/handle/10283/3336
-  1. Download `LA.zip` and unzip it
-  2. Set your dataset directory in the configuration file
-
-### Training 
-The `main.py` includes train/validation/evaluation.
-
-To train AASIST [1]:
-```
-python main.py --config ./config/AASIST.conf
-```
-To train AASIST-L [1]:
-```
-python main.py --config ./config/AASIST-L.conf
-```
-
-#### Training baselines
-
-We additionally enabled the training of RawNet2[2] and RawGAT-ST[3]. 
-
-To Train RawNet2 [2]:
-```
-python main.py --config ./config/RawNet2_baseline.conf
-```
-
-To train RawGAT-ST [3]:
-```
-python main.py --config ./config/RawGATST_baseline.conf
-```
-
 ### Pre-trained models
-We provide pre-trained AASIST and AASIST-L.
-
 To evaluate AASIST [1]:
-- It shows `EER: 0.83%`, `min t-DCF: 0.0275`
 ```
 python main.py --eval --config ./config/AASIST.conf
 ```
 To evaluate AASIST-L [1]:
-- It shows `EER: 0.99%`, `min t-DCF: 0.0309`
-- Model has `85,306` parameters
 ```
 python main.py --eval --config ./config/AASIST-L.conf
 ```
-
-
-### Developing custom models
-Simply by adding a configuration file and a model architecture, one can train and evaluate their models.
-
-To train a custom model:
+### Conversion to ONNX
 ```
-1. Define your model
-  - The model should be a class named "Model"
-2. Make a configuration by modifying "model_config"
-  - architecture: filename of your model.
-  - hyper-parameters to be tuned can be also passed using variables in "model_config"
-3. run python main.py --config {CUSTOM_CONFIG_NAME}
+import torch
+import numpy as np
+import json
+# import ai_edge_torch                                     # <- now safe
+# from ai_edge_torch.quantize import pt2e_quantizer, quant_config
+from torch.ao.quantization import quantize_pt2e
+
+# ────────────────────────────────────────────────────────────────────────────
+# 2.  LOAD MODEL (+ required `d_args`)
+# ────────────────────────────────────────────────────────────────────────────
+from AASIST import Model
+
+# d_args = {
+#     # 1-D front-end
+#     "first_conv": 128,
+#     "filts": [70, [1, 32], [32, 32], [32, 64], [64, 64]],
+#     # Graph-attention branch
+#     "gat_dims": [64, 32],
+#     "pool_ratios": [0.5, 0.7, 0.5, 0.5],
+#     "temperatures": [2.0, 2.0, 100.0, 100.0]
+# }
+
+with open("./config/AASIST.conf", 'r') as f:
+  cfg = json.load(f)
+  d_args = cfg['model_config']
+
+device = torch.device("cpu")
+model  = Model(d_args).to(device)
+model.load_state_dict(torch.load("./models/weights/AASIST.pth", map_location=device))
+model.eval()
+
+# Create dummy input
+dummy_input = torch.randn(1, 16000, dtype=torch.float32)
+
+ # Export to ONNX
+torch.onnx.export(
+    model,
+    dummy_input,
+    "./aasist.onnx",
+    export_params=True,
+    opset_version=13,
+    input_names=["input"],
+    output_names=["embedding", "logits"],
+    dynamic_axes={"input": {1: "num_samples"}}
+)
+print(f"Model successfully exported")
+```
+### Run ONNX inference
+```
+!python inference_onnx.py \
+  --onnx_model_path     aasist.onnx \
+  --audio_path     path/to/audio/file
+```
+
+### Edge Impulse profiling
+```
+import edgeimpulse as ei
+
+ei.API_KEY = "ei_656a225s82q1232..." # API key
+
+ei.util.is_onnx_model("./aasist.onnx")
 ```
 
 ### License
